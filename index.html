@@ -1,0 +1,367 @@
+<html lang="en">
+  <head>
+    <title>M/M/1</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="lib/bootstrap.min.css" />
+    <style>
+      .bg-gray {
+        background-color: #e9ecef !important;
+      }
+      .trans {
+        transition: all 0.8s;
+      }
+    </style>
+  </head>
+  <body class="bg-gray">
+    <div ng-app="myApp" ng-controller="myCtrl">
+      <div class="jumbotron text-center">
+        <h1>Single-server queueing system</h1>
+      </div>
+      <div class="container mb-5">
+        <div class="row">
+          <div
+            class="col-12 bg-white trans"
+            ng-class="(sim_type == 0) ? 'col-md-12 p-5' : 'col-md-2 p-2'"
+          >
+            <h5 class="text-center">Choose simulation type:</h5>
+            <h6 ng-show="sim_type == 0">
+              Do you want to insert arrival and service times? If you select NO
+              the arrival and service times will be generated randomly
+            </h6>
+
+            <div class="d-flex justify-content-around align-items-center">
+              <button
+                class="btn text-white"
+                ng-class="(sim_type == 2) ? 'btn-success' : 'btn-primary'"
+                ng-click="chooseSimType(2)"
+              >
+                <span ng-show="sim_type == 0"> YES </span>
+                <span ng-show="sim_type > 0"> Manually </span>
+              </button>
+
+              <button
+                class="btn text-white"
+                ng-class="(sim_type == 1) ? 'btn-success' : 'btn-primary'"
+                ng-click="chooseSimType(1)"
+              >
+                <span ng-show="sim_type == 0"> NO </span>
+                <span ng-show="sim_type > 0"> Randomly</span>
+              </button>
+            </div>
+            <button
+              class="btn btn-primary text-white mt-2"
+              ng-click="restart()"
+              ng-show="historyExists"
+            >
+              RESTART LAST SIMULATION
+            </button>
+            <button
+              class="btn btn-primary text-white mt-2"
+              ng-click="universityExStart()"
+            >
+              Run University Example 1
+            </button>
+          </div>
+
+          <div ng-show="sim_type === 1" class="col-12 col-md-10">
+            <form name="myform " class="bg-white p-3">
+              <h6>Configurations</h6>
+
+              <div class="row">
+                <div class="col-sm-3 col-12">
+                  <div class="form-group">
+                    <label> Mean interarrival time - minutes </label>
+                    <input
+                      type="number"
+                      step="any"
+                      class="form-control"
+                      ng-model="start.mean_i"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12">
+                  <div class="form-group">
+                    <label> Mean service time - minutes</label>
+                    <input
+                      type="number"
+                      step="any"
+                      class="form-control"
+                      ng-model="start.mean_s"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12">
+                  <div class="form-check-inline">
+                    <label class="form-check-label">
+                      <input
+                        type="radio"
+                        class="form-check-input"
+                        name="end"
+                        value="1"
+                        ng-model="start.e_type"
+                        ng-checked="true"
+                      />End on time
+                    </label>
+                  </div>
+                  <div class="form-check-inline">
+                    <label class="form-check-label">
+                      <input
+                        type="radio"
+                        class="form-check-input"
+                        name="end"
+                        value="2"
+                        ng-model="start.e_type"
+                      />End on customers
+                    </label>
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12" ng-show="start.e_type == 1">
+                  <div class="form-group">
+                    <label> End time </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      ng-model="start.e_time"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12" ng-show="start.e_type == 2">
+                  <div class="form-group">
+                    <label> Number of customers required </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      ng-model="start.num_delays_req"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-4"></div>
+                <div class="col-md-4 col-12">
+                  <button
+                    class="btn btn-primary"
+                    ng-disabled="!myform.$valid"
+                    ng-click="startSim(start)"
+                  >
+                    Start Simulation
+                  </button>
+                </div>
+                <div class="col-md-4"></div>
+              </div>
+            </form>
+          </div>
+          <div ng-show="sim_type === 2" class="col-12 col-md-10">
+            <form name="myForm2" class="bg-white p-3" ng-show="sim_type === 2">
+              <div class="row">
+                <h6>Configurations</h6>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4 col-12">
+                  <div class="form-group">
+                    <label> Number of Arrival times </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      ng-model="manually.number_of_as"
+                      ng-change="initAs(manually.number_of_as)"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12">
+                  <div class="form-check-inline">
+                    <label class="form-check-label">
+                      <input
+                        type="radio"
+                        class="form-check-input"
+                        name="end"
+                        value="1"
+                        ng-model="manually.e_type"
+                        ng-checked="true"
+                      />End on time
+                    </label>
+                  </div>
+                  <div class="form-check-inline">
+                    <label class="form-check-label">
+                      <input
+                        type="radio"
+                        class="form-check-input"
+                        name="end"
+                        value="2"
+                        ng-model="manually.e_type"
+                      />End on customers
+                    </label>
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12" ng-show="manually.e_type == 1">
+                  <div class="form-group">
+                    <label> End time </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      ng-model="manually.e_time"
+                    />
+                  </div>
+                </div>
+                <div class="col-sm-3 col-12" ng-show="manually.e_type == 2">
+                  <div class="form-group">
+                    <label> Number of customers required </label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      ng-model="manually.num_delays_req"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="row" ng-repeat="i in manually.arrival_services">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label> A{{$index +1}} </label>
+                    <input
+                      type="number"
+                      step="any"
+                      class="form-control"
+                      ng-model="i.arrival"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-group">
+                    <label> S{{$index +1}} </label>
+                    <input
+                      type="number"
+                      step="any"
+                      class="form-control"
+                      ng-model="i.service"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4"></div>
+                <div class="col-md-4 col-12">
+                  <button
+                    class="btn btn-primary"
+                    ng-disabled="!myform2.$valid"
+                    ng-click="startSim(manually)"
+                  >
+                    Start Simulation
+                  </button>
+                </div>
+                <div class="col-md-4"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div
+        ng-show="loading"
+        class="d-flex justify-content-center align-items-center"
+        style="height: 30vh; width: 100vw"
+      >
+        <div class="spinner-border text-success"></div>
+      </div>
+
+      <div class="container bg-white p-3" ng-show="sim_end">
+        <h4>Results:</h4>
+        <div class="bg-danger mt-1 mb-3" ng-show="sim_result.errors.length > 0">
+          <h5>Errors:</h5>
+          <ul>
+            <li ng-repeat="er in sim_result.errors">{{er}}</li>
+          </ul>
+        </div>
+        <div class="my-3">
+          <p>
+            <b> Average delay in queue:</b>
+            {{sim_result.rep.average_delay_in_q}} minutes
+          </p>
+
+          <p>
+            <b> Average number in queue:</b>
+            {{sim_result.rep.average_num_in_q}}
+          </p>
+
+          <p>
+            <b> Server utilization:</b>
+            {{sim_result.rep.average_server_util}} minutes
+          </p>
+          <p>
+            <b> Time simulation ended:</b>
+            {{sim_result.rep.time_end}} minutes
+          </p>
+        </div>
+        <div class="my-3">
+          <h5>Simulation table:</h5>
+          <p class="text-warning">
+            The table will show only the first 30 results, you can check the
+            console for the full result
+          </p>
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Event type</th>
+                <th>Server Status</th>
+                <th>Num in queue</th>
+                <th>Time arrival</th>
+                <th>Time of last event</th>
+                <th>Clock</th>
+                <th>Event list</th>
+                <th>Num delayed</th>
+                <th>Total delays</th>
+                <th>Area under Q(t)</th>
+                <th>Area under B(t)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="item in sim_result.table track by $index">
+                <th><p>{{item.system_event_type}}</p></th>
+                <th><p>{{item.server_status}}</p></th>
+                <th><p>{{item.num_in_queue}}</p></th>
+                <th>
+                  <span ng-repeat="ta in item.time_arrival track by $index">
+                    <span ng-hide="$first">
+                      {{ta}} <span ng-hide="$last "> , </span>
+                    </span>
+                  </span>
+                </th>
+                <th><p>{{item.time_last_event}}</p></th>
+                <th><p>{{item.sim_time}}</p></th>
+                <th>
+                  <span ng-repeat="el in item.event_list track by $index">
+                    <span ng-hide="$first">
+                      {{el}} <span ng-hide="$last "> , </span>
+                    </span>
+                  </span>
+                </th>
+                <th><p>{{item.num_delay}}</p></th>
+                <th><p>{{item.total_of_delays}}</p></th>
+                <th><p>{{item.area_queue}}</p></th>
+                <th><p>{{item.area_server}}</p></th>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="lib/angular.min.js"></script>
+    <script src="lib/jquery.min.js"></script>
+    <script src="lib/popper.min.js"></script>
+    <script src="lib/bootstrap.min.js"></script>
+    <script src="sadersim.min.js"></script>
+
+    <script src="script.js"></script>
+  </body>
+</html>
